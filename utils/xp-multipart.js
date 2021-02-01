@@ -31,13 +31,6 @@ export async function multipartUpload({
 	})
 }
 
-function isH5() {
-	let platform = "MP-WEIXIN"
-	// #ifdef H5
-	platform = "H5"
-	// #endif
-	return platform === "H5"
-}
 /**
  * 转换成二进制流
  * @param {Object} fields
@@ -47,31 +40,16 @@ async function toBuf(fields, files) {
 	buffers.push(fields2Buf(fields))
 
 	for (const key in files) {
-		let buf,
-			header
-		// #ifdef H5
-		let obj = files[key]
-		const {
-			type: contentType,
-			name: filename
-		} = obj
-		header = `${splitBoundary}${br}Content-Disposition:form-data;name="${key}";filename="${filename}"${br}`
-		header += `Content-Type: ${contentType}${br2}`
-		buf = await getFileBuf(files[key])
-		// #endif
-
-		// #ifdef MP-WEIXIN
 		const filePath = files[key]
 		const contentType = getType(filePath)
 
 		let filename = ''
 		const matchArr = filePath.match(/(?:(?!\/).)*$/)
 		if (matchArr) filename = matchArr[0]
-		header = `${splitBoundary}${br}Content-Disposition:form-data;name="${key}";filename="${filename}"${br}`
+		let header = `${splitBoundary}${br}Content-Disposition:form-data;name="${key}";filename="${filename}"${br}`
 		header += `Content-Type: ${contentType}${br2}`
 
-		buf = await getFileBuf(filePath)
-		// #endif
+		let buf = await getFileBuf(filePath)
 		buffers.push(toUTF8Bytes(header))
 		buffers.push(new Uint8Array(buf))
 		buffers.push(toUTF8Bytes(br))
@@ -106,8 +84,7 @@ function fields2Buf(fields) {
 }
 
 function getFileBuf(parma) {
-	return new Promise((resolve, reject) => {
-		// #ifdef MP-WEIXIN
+	return new Promise(resolve => {
 		wx.getFileSystemManager().readFile({
 			filePath: parma,
 			success(res) {
@@ -117,17 +94,6 @@ function getFileBuf(parma) {
 				console.error(err.errMsg)
 			}
 		})
-		// #endif
-		// #ifdef H5
-		const fr = new FileReader()
-		fr.readAsArrayBuffer(parma);
-		fr.onload = e => {
-			resolve(e.target.result)
-		}
-		fr.onerror = e => {
-			console.error(e.errMsg)
-		}
-		// #endif
 	})
 }
 /**
@@ -175,7 +141,7 @@ function getType(url) {
 	const index = url.lastIndexOf(".");
 	const ext = url.substr(index + 1);
 	for (let k in mines) {
-		if (mines[k].extensions == undefined) continue
+		if (mines[k].extensions === undefined) continue
 		if (mines[k].extensions.indexOf(ext) !== -1) return k
 	}
 	return null
