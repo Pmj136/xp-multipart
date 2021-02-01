@@ -7,7 +7,7 @@
 <script>
 	import {
 		multipartUpload as upload
-	} from "@/utils/xp-multipart.js"
+	} from "@/utils/xp-multipart.min.js"
 	export default {
 		methods: {
 			mpSelectImg() {
@@ -21,7 +21,8 @@
 								age: 28
 							},
 							files: {
-								avatar: res.tempFilePaths[0]
+								avatar: res.tempFilePaths[0],
+								img:res.tempFilePaths[1]
 							},
 							success(res) {}
 						})
