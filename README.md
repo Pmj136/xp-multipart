@@ -4,7 +4,9 @@ uniapp官方提供的uni.uploadFile一次只能上传一个文件，xp-multipart
 (可替代uni.request)，也可以同时上传多个图片文件
 
 ## 一、概述
- 底层依然使用uni.request 进行封装，因此小程序管理后台设置了request的合法域名可以正常使用
+
+- 基于<font color=#FF0000>微信小程序</font>、<font color=#FF0000>h5浏览器端</font>封装的，其余平台暂未考虑
+- 底层依然使用uni.request 进行封装，因此小程序管理后台设置了request的合法域名可以正常使用
 
 ## 二、在项目中使用
 - url   接口地址
