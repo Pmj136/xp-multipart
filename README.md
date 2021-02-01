@@ -12,7 +12,7 @@ uniapp官方提供的uni.uploadFile一次只能上传一个文件，xp-multipart
 - url   接口地址
 - fields 表单数据
 - files  文件图片(注意平台，留意下方注释)
-```js
+```javascript
 
 import {
     multipartUpload as upload
