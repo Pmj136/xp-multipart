@@ -13,7 +13,7 @@ export async function multipartUpload({
 	success,
 	fail
 }) {
-	let data = await toBuf(fields, files)
+	let data = await toBuffer(fields, files)
 	return uni.request({
 		url,
 		data,
@@ -32,69 +32,72 @@ export async function multipartUpload({
 }
 
 /**
- * 转换成二进制流
+ * 转换成 ArrayBuffer
  * @param {Object} fields
+ * @param {Object} files
  */
-async function toBuf(fields, files) {
-	let buffers = []
-	buffers.push(fields2Buf(fields))
+async function toBuffer(fields, files) {
+	const mixUints = []
+	let fieldHeader = ''
+	for (const key in fields) {
+		fieldHeader += getFieldHeader(key, fields[key])
+	}
+	mixUints.push(str2Uint8Arr(fieldHeader))
 
 	for (const key in files) {
 		const filePath = files[key]
-		const contentType = getType(filePath)
 
-		let filename = ''
-		const matchArr = filePath.match(/(?:(?!\/).)*$/)
-		if (matchArr) filename = matchArr[0]
-		let header = `${splitBoundary}${br}Content-Disposition:form-data;name="${key}";filename="${filename}"${br}`
-		header += `Content-Type: ${contentType}${br2}`
+		const fileHeader = getFileHeader(key, filePath)
+		mixUints.push(str2Uint8Arr(fileHeader))
 
-		let buf = await getFileBuf(filePath)
-		buffers.push(toUTF8Bytes(header))
-		buffers.push(new Uint8Array(buf))
-		buffers.push(toUTF8Bytes(br))
+		const fileUint8Arr = await file2Uint8Arr(filePath)
+		mixUints.push(fileUint8Arr)
+		mixUints.push(str2Uint8Arr(br))
 	}
 
-	buffers.push(toUTF8Bytes(splitBoundary + "--")) //结尾
-	
-	const len = buffers.reduce((prev, cur) => {
+	mixUints.push(str2Uint8Arr(splitBoundary + "--")) //结尾
+
+	return convert2Buffer(mixUints)
+}
+/**
+ * mix数组转换成 arraybuffer
+ * @param {Object} mixUints
+ */
+function convert2Buffer(mixUints) {
+	const len = mixUints.reduce((prev, cur) => {
 		return prev + cur.length
 	}, 0)
-	let arrayBuffer = new ArrayBuffer(len)
-	let buffer = new Uint8Array(arrayBuffer)
+	const arrayBuffer = new ArrayBuffer(len)
+	const buffer = new Uint8Array(arrayBuffer)
 	let sum = 0
-
-	for (let i = 0; i < buffers.length; i++) {
-		for (let j = 0; j < buffers[i].length; j++) {
-			buffer[sum + j] = buffers[i][j]
+	for (let i = 0; i < mixUints.length; i++) {
+		for (let j = 0; j < mixUints[i].length; j++) {
+			buffer[sum + j] = mixUints[i][j]
 		}
-		sum += buffers[i].length
+		sum += mixUints[i].length
 	}
 	return arrayBuffer
 }
-
-function fields2Buf(fields) {
-	let data = ''
-	for (const key in fields) {
-		data += `${splitBoundary}${br}`
-		data += `Content-Disposition: form-data; name="${key}"${br2}`
-		data += `${fields[key]}${br}`
-	}
-	return toUTF8Bytes(data)
+/**
+ * 生成普通字段boundary串
+ * @param {Object} key
+ * @param {Object} val
+ */
+function getFieldHeader(key, val) {
+	return `${splitBoundary}${br}Content-Disposition: form-data; name="${key}"${br2}${val}${br}`
 }
 
-function getFileBuf(parma) {
-	return new Promise(resolve => {
-		wx.getFileSystemManager().readFile({
-			filePath: parma,
-			success(res) {
-				resolve(res.data)
-			},
-			fail(err) {
-				console.error(err.errMsg)
-			}
-		})
-	})
+/**
+ * 生成图片字段boundary串
+ * @param {Object} name
+ * @param {Object} filePath
+ */
+function getFileHeader(name, filePath) {
+	const contentType = getType(filePath)
+	let filename = ''
+	const matchArr = filePath.match(/(?:(?!\/).)*$/)
+	if (matchArr) filename = matchArr[0]
+	return `${splitBoundary}${br}Content-Disposition: form-data; name="${name}"; filename="${filename}"${br}Content-Type: ${contentType}${br2}`
 }
 /**
  * 生成boundary
@@ -108,12 +111,11 @@ function generateBoundary() {
 	}
 	return boundary;
 }
-
 /**
- * 字符串转UTF-8 二进制流
+ * 字符串转 Uint8Array
  * @param {String} str
  */
-function toUTF8Bytes(str) {
+function str2Uint8Arr(str) {
 	let bytes = [];
 	for (let i = 0; i < str.length; i++) {
 		let code = str.charCodeAt(i);
@@ -132,6 +134,23 @@ function toUTF8Bytes(str) {
 		bytes[i] &= 0xff;
 	}
 	return bytes
+}
+/**
+ * 文件转 Uint8Array
+ * @param {String} filePath
+ */
+function file2Uint8Arr(filePath) {
+	return new Promise(resolve => {
+		wx.getFileSystemManager().readFile({
+			filePath,
+			success(res) {
+				resolve(new Uint8Array(res.data))
+			},
+			fail(err) {
+				console.error(err.errMsg)
+			}
+		})
+	})
 }
 /**
  * 获取文件类型
