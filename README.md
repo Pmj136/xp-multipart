@@ -7,7 +7,9 @@ uniapp官方提供的uni.uploadFile一次只能上传一个文件，xp-multipart
  底层依然使用uni.request 进行封装，因此小程序管理后台设置了request的合法域名可以正常使用
 
 ## 二、在项目中使用
-
+- url   接口地址
+- fields 表单数据
+- files  文件图片(注意平台，留意下方注释)
 ```js
 
 import {
