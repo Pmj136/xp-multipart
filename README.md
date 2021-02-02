@@ -1,11 +1,11 @@
 # xp-multipart
 
-uniapp官方提供的uni.uploadFile一次只能上传一个图片，xp-multipart既可以用来发送普通的表单数据
-(可替代uni.request)，也可以同时上传多个图片文件
-
 ## 一、概述
 
-- 为<font color=#FF0000>微信小程序</font>封装的，其余平台暂未考虑；app和h5直接使用uni.uploadFile即可
+- uniapp官方提供的uni.uploadFile一次只能上传一个图片，xp-multipart既可以用来发送普通的表单数据，也可以同时上传多个图片文件
+
+- 为<font color=#FF0000>微信小程序</font>封装的，其余平台暂未考虑；<font color=#00ff00>app和h5</font>直接使用uni.uploadFile即可
+
 - 底层依然使用uni.request 进行封装，因此小程序管理后台设置了request的合法域名可以正常使用
 
 ## 二、在项目中使用
@@ -13,7 +13,11 @@ uniapp官方提供的uni.uploadFile一次只能上传一个图片，xp-multipart
 - url 接口地址
 - fields 表单数据
 - files 文件图片
-- header 请求头
+- header 请求头（函数中content-type为multipart/form-data，不可也无需再设置）
+
+若以回调函数的形式(success,fail,complete)获取结果，将不再返回Promise，反之则返回Promise
+
+
 ```js
 
 import {
@@ -22,7 +26,7 @@ import {
 
 //1、回调函数
 uni.chooseImage({
-    count:2,//选择两张图片
+    count: 2,//选择两张图片
     success(res) {
         upload({
             url: "http://localhost:6891/upload", //后端接口
@@ -32,13 +36,16 @@ uni.chooseImage({
             },
             files: {
                 avatar: res.tempFilePaths[0],
-                img:res.tempFilePaths[1]
+                img: res.tempFilePaths[1]
             },
             success(res) {
                 console.log(res)
             },
             fail(err) {
                 console.log(err)
+            },
+            complete(ret) {
+                console.log(ret)
             }
         })
     }
@@ -46,7 +53,7 @@ uni.chooseImage({
 
 //2、你也可以链式调用
 uni.chooseImage({
-    count:2,//选择两张图片
+    count: 2,//选择两张图片
     success(res) {
         upload({
             url: "http://localhost:6891/upload", //后端接口
@@ -56,7 +63,7 @@ uni.chooseImage({
             },
             files: {
                 avatar: res.tempFilePaths[0],
-                img:res.tempFilePaths[1]
+                img: res.tempFilePaths[1]
             }
         }).then(res => {
             console.log(res)

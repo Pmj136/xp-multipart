@@ -22,9 +22,10 @@
 							},
 							files: {
 								avatar: res.tempFilePaths[0],
-								img:res.tempFilePaths[1]
+								img: res.tempFilePaths[1]
 							},
-							success(res) {}
+						}).then(e => {
+							console.log(e)
 						})
 					}
 				})

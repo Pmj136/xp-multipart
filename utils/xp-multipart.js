@@ -4,6 +4,10 @@ const br = '\r\n'
 const br2 = '\r\n\r\n'
 const boundary = generateBoundary()
 const splitBoundary = "--" + boundary
+const commonTypes = {
+	// 空间复杂度 换取 时间复杂度
+	// 避免每次上传图片时 getType方法 大量遍历MIME标准，提高性能
+}
 
 export async function multipartUpload({
 	url,
@@ -11,24 +15,32 @@ export async function multipartUpload({
 	fields,
 	files,
 	success,
-	fail
+	fail,
+	complete
 }) {
 	let data = await toBuffer(fields, files)
-	return uni.request({
+	let params = {
 		url,
 		data,
 		method: "POST",
 		header: {
 			...header,
 			'Content-Type': 'multipart/form-data; boundary=' + boundary
-		},
-		success(c) {
-			success(c)
-		},
-		fail(f) {
-			fail(f)
 		}
-	})
+	}
+	if (success || fail || complete)
+		Object.assign(params, {
+			success(s) {
+				success && success(s)
+			},
+			fail(f) {
+				fail && fail(f)
+			},
+			complete(c) {
+				complete && complete(c)
+			}
+		})
+	return uni.request(params)
 }
 
 /**
@@ -94,9 +106,7 @@ function getFieldHeader(key, val) {
  */
 function getFileHeader(name, filePath) {
 	const contentType = getType(filePath)
-	let filename = ''
-	const matchArr = filePath.match(/(?:(?!\/).)*$/)
-	if (matchArr) filename = matchArr[0]
+	const filename = filePath.replace(/^(.*)\/(.*)/, "$2")
 	return `${splitBoundary}${br}Content-Disposition: form-data; name="${name}"; filename="${filename}"${br}Content-Type: ${contentType}${br2}`
 }
 /**
@@ -159,9 +169,15 @@ function file2Uint8Arr(filePath) {
 function getType(url) {
 	const index = url.lastIndexOf(".");
 	const ext = url.substr(index + 1);
+	if (commonTypes.hasOwnProperty(ext)) {
+		return commonTypes[ext]
+	}
 	for (let k in mines) {
 		if (mines[k].extensions === undefined) continue
-		if (mines[k].extensions.indexOf(ext) !== -1) return k
+		if (mines[k].extensions.indexOf(ext) !== -1) {
+			commonTypes[ext] = k
+			return k
+		}
 	}
 	return null
 }
