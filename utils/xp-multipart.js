@@ -8,7 +8,7 @@ const commonTypes = {
 	// 空间复杂度 换取 时间复杂度
 	// 避免每次上传图片时 getType方法 大量遍历MIME标准，提高性能
 }
-
+export let uploadTask = null
 export async function multipartUpload({
 	url,
 	header,
@@ -19,27 +19,23 @@ export async function multipartUpload({
 	complete
 }) {
 	let data = await toBuffer(fields, files)
-	return new Promise((resolve, reject) => {
-		wx.request({
-			url,
-			data,
-			method: "POST",
-			header: {
-				...header,
-				'Content-Type': 'multipart/form-data; boundary=' + boundary
-			},
-			success(s) {
-				success && success(s)
-				resolve(s)
-			},
-			fail(f) {
-				fail && fail(f)
-				reject(f)
-			},
-			complete(c) {
-				complete && complete(c)
-			}
-		})
+	uploadTask = wx.request({
+		url,
+		data,
+		method: "POST",
+		header: {
+			...header,
+			'Content-Type': 'multipart/form-data; boundary=' + boundary
+		},
+		success(s) {
+			success(s)
+		},
+		fail(f) {
+			fail && fail(f)
+		},
+		complete(c) {
+			complete && complete(c)
+		}
 	})
 }
 
@@ -60,6 +56,7 @@ async function toBuffer(fields, files) {
 		const filePath = files[key]
 
 		const fileHeader = getFileHeader(key, filePath)
+		if (fileHeader == null) continue
 		mixUints.push(str2Uint8Arr(fileHeader))
 
 		const fileUint8Arr = await file2Uint8Arr(filePath)
@@ -106,6 +103,7 @@ function getFieldHeader(key, val) {
  */
 function getFileHeader(name, filePath) {
 	const contentType = getType(filePath)
+	if (contentType == null) return null;
 	const filename = filePath.replace(/^(.*)\/(.*)/, "$2")
 	return `${splitBoundary}${br}Content-Disposition: form-data; name="${name}"; filename="${filename}"${br}Content-Type: ${contentType}${br2}`
 }
@@ -167,6 +165,7 @@ function file2Uint8Arr(filePath) {
  * @param {Object} url
  */
 function getType(url) {
+	if (!url) return null
 	const index = url.lastIndexOf(".");
 	const ext = url.substr(index + 1);
 	if (commonTypes.hasOwnProperty(ext)) {

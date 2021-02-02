@@ -13,12 +13,17 @@
 - url 接口地址
 - fields 表单数据
 - files 文件图片
-- header 请求头（函数中content-type为multipart/form-data，不可也无需再设置）
+- header 请求头（函数中content-type为multipart/form-data，不可也无需再设置
+- success (必传参数)
+- fail 
+- complete 
+
 
 ```js
 
 import {
-    multipartUpload as upload
+    multipartUpload as upload,
+    uploadTask as task //上传任务对象，同requestTask
 } from "@/utils/xp-multipart.js"
 
 //1、回调函数
@@ -48,27 +53,8 @@ uni.chooseImage({
     }
 })
 
-//2、你也可以链式调用
-uni.chooseImage({
-    count: 2,//选择两张图片
-    success(res) {
-        upload({
-            url: "http://localhost:6891/upload", //后端接口
-            fields: {
-                username: "张三",
-                age: 24
-            },
-            files: {
-                avatar: res.tempFilePaths[0],
-                img: res.tempFilePaths[1]
-            }
-        }).then(res => {
-            console.log(res)
-        }).catch(err => {
-            console.log(err)
-        })
-    }
-})
+
+task.abort();//取消上传
 ```
 
 ### 附上后端接口示例（这里用的是spring-boot）
