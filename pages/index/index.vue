@@ -24,8 +24,12 @@
 								avatar: res.tempFilePaths[0],
 								img: res.tempFilePaths[1]
 							},
-						}).then(e => {
-							console.log(e)
+							success(res){
+								console.log(res)
+							},
+							fail(res){
+								console.log(res)
+							}
 						})
 					}
 				})

@@ -19,28 +19,28 @@ export async function multipartUpload({
 	complete
 }) {
 	let data = await toBuffer(fields, files)
-	let params = {
-		url,
-		data,
-		method: "POST",
-		header: {
-			...header,
-			'Content-Type': 'multipart/form-data; boundary=' + boundary
-		}
-	}
-	if (success || fail || complete)
-		Object.assign(params, {
+	return new Promise((resolve, reject) => {
+		wx.request({
+			url,
+			data,
+			method: "POST",
+			header: {
+				...header,
+				'Content-Type': 'multipart/form-data; boundary=' + boundary
+			},
 			success(s) {
 				success && success(s)
+				resolve(s)
 			},
 			fail(f) {
 				fail && fail(f)
+				reject(f)
 			},
 			complete(c) {
 				complete && complete(c)
 			}
 		})
-	return uni.request(params)
+	})
 }
 
 /**
