@@ -78,11 +78,11 @@ uni.chooseImage({
     public String upload(@RequestParam("username") String name,
                          @RequestParam("age") Integer age,
                          MultipartFile avatar,
-						 MultipartFile img) {
+                         MultipartFile img) {
         System.out.println(name);
         System.out.println(age);
         System.out.println(avatar.getOriginalFilename());
-	    System.out.println(img.getOriginalFilename());
+        System.out.println(img.getOriginalFilename());
         return "success";
     }
 ```
